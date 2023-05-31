@@ -136,6 +136,8 @@
 #' # default call
 #' \donttest{
 #' snvec()
+#' # remove the directory with the cached orbital solution to clean up
+#' unlink(tools::R_user_dir("snvecR", which = "cache"), recursive = TRUE)
 #' }
 #' @export
 snvec <- function(tend = -1e3,
