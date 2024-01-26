@@ -2,14 +2,13 @@
 % Please edit documentation in R/get_solution.R
 \name{get_solution}
 \alias{get_solution}
-\title{Get an Orbital Solution}
+\title{Get an Astronomical Solution}
 \usage{
-get_solution(orbital_solution = "ZB18a", quiet = FALSE, force = FALSE)
+get_solution(astronomical_solution = "PT-ZB18a", quiet = FALSE, force = FALSE)
 }
 \arguments{
-\item{orbital_solution}{Character vector with the name of the orbital
-solution to use. One of \code{"ZB18a"} (default) from Zeebe and Lourens (2019),
-or \code{"La11"} (not yet implemented!).}
+\item{astronomical_solution}{Character vector with the name of the desired
+solution.}
 
 \item{quiet}{Be quiet?
 \itemize{
@@ -21,22 +20,34 @@ or \code{"La11"} (not yet implemented!).}
 to the cache.}
 }
 \value{
-\code{get_solution()} returns a \link[tibble:tibble-package]{tibble} with the
-orbital solution input and some preprocessed new columns.
+A \link[tibble:tibble-package]{tibble} with the astronomical solution
+(and some preprocessed new columns).
 }
 \description{
-Get an Orbital Solution
+Download supported astronomical solutions from the web and store it in the
+user's cache directory. The next use of the function will load the data from
+the cache rather than downloading it again. This also provides a wrapper for
+\code{\link[astrochron:getLaskar]{astrochron::getLaskar()}} if one of their supported solutions is specified,
+but converts the output to a \link[tibble:tibble-package]{tibble}. Note that we
+do not cache these solutions locally, however.
 }
 \examples{
 \donttest{
-get_solution()
+get_solution("PT-ZB18a")
+get_solution("ZB20a")
+get_solution("La11")
 }
 }
 \references{
 Zeebe, R. E., & Lourens, L. J. (2019). Solar System chaos and the
 Paleocene–Eocene boundary age constrained by geology and astronomy.
 \emph{Science}, 365(6456), 926–929. \doi{10.1126/science.aax0612}.
+
+Zeebe, R. E. and Lourens, L. J. (2022). A deep-time dating tool for
+paleo-applications utilizing obliquity and precession cycles: The role of
+dynamical ellipticity and tidal dissipation. \emph{Paleoceanography and
+Paleoclimatology}. \doi{10.1029/2021PA004349}
 }
 \seealso{
-\code{\link[=get_ZB18a]{get_ZB18a()}}
+\link{PT_ZB18a}, \link{ZB17}, \link{ZB18a}, \link{ZB20}
 }

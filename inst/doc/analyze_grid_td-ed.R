@@ -1,4 +1,4 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
@@ -46,7 +46,7 @@ biggrid <- biggrid |>
                       # I would strongly recommend against increasing the
                       # resolution too much, but for speed/illustration we
                       # prefer to do it here
-                      tres = 5,
+                      tres = -5,
                       # interactively this makes a nice progress bar
                       .progress = "snvec on a grid")) #|>
 
@@ -67,7 +67,7 @@ expanded
 
 ## ----plot---------------------------------------------------------------------
 expanded |>
-  ggplot(aes(x = age, y = cp,
+  ggplot(aes(x = -t_ka, y = cp,
              colour = factor(Td),
              linetype = factor(Ed))) +
   scale_x_reverse() +
@@ -79,7 +79,12 @@ expanded |>
   facet_grid(rows = vars(Td)) +
   geom_line() +
   # add eccentricity
-  geom_line(aes(y = eei), colour = "black")
+  geom_line(aes(y = ee),
+            linetype = "solid",
+            colour = "black",
+            data = get_solution() |>
+              filter(t_ka > -1000) |>
+              filter(t_ka < -500))
 
 ## ----add-filenames------------------------------------------------------------
 biggrid <- biggrid |>
@@ -105,7 +110,7 @@ biggrid |>
   rename(td = Td, ed = Ed, atol = atol) |>
   purrr::pwalk(.f = snvec_save,
                # additional parameters can go after!
-               quiet = TRUE, output = "nice", tres = 5,
+               quiet = TRUE, output = "nice", tres = -5,
                # show progress bar
                .progress = "snvec to file")
 
@@ -119,7 +124,7 @@ biggrid |> # limit to a few experiments
   # unfold the list column
   unnest(fullsol) |>
   # plot the obliquity
-  ggplot(aes(x = age, y = epl,
+  ggplot(aes(x = -t_ka, y = epl,
              colour = factor(Td),
              linetype = factor(Ed))) +
   labs(x = "Age (ka)", y = "Obliquity",

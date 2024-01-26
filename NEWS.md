@@ -1,4 +1,19 @@
+# snvecR 3.8.0
+* Fix snapshot tests for CI (overwrite the cache dir, which is unique to each test).
+* Make it possible for the user to specify a custom orbital solution as a
+  data.frame. It should either have the same column names as the output of
+  get_ZB18a() or as the output of [orbitN](https://github.com/rezeebe/orbitN);
+  we automatically convert the column names to snvec columns names for
+  convenience.
+* Rename orbital solution to astronomical solution throughout.
+* Migrate get_ZB18a to get_ZB so that the user can easily get all the Zeebe
+  solutions from the website (and cache them as well).
+* Added support for reading all Zeebe astronomical solutions to function
+  get_solution(). Also a added a wrapper for `astrochron::getLaskar()` if the
+  user provides a supported Laskar solution name.
+
 # snvecR 3.7.7
+* Fix CRAN issues by revising the logic for checking the cache.
 
 # snvecR 3.7.6
 * Remove cache directory after last example (even though it's in a donttest environment).

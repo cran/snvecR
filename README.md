@@ -8,6 +8,7 @@
 [![DOI](https://zenodo.org/badge/627092810.svg)](https://zenodo.org/badge/latestdoi/627092810)
 [![CRAN
 status](https://www.r-pkg.org/badges/version/snvecR)](https://CRAN.R-project.org/package=snvecR)
+[![](http://cranlogs.r-pkg.org/badges/grand-total/snvecR)](https://cran.r-project.org/package=snvecR)
 [![GPL-3](https://img.shields.io/github/license/japhir/snvecR?logo=gnu&.svg)](https://github.com/japhir/snvecR/blob/master/LICENSE.md)
 [![release](https://img.shields.io/github/v/release/japhir/snvecR.svg)](https://github.com/japhir/snvecR/releases)
 [![R-CMD-check](https://github.com/japhir/snvecR/actions/workflows/check-standard.yaml/badge.svg)](https://github.com/japhir/snvecR/actions/workflows/check-standard.yaml)
@@ -15,8 +16,8 @@ status](https://www.r-pkg.org/badges/version/snvecR)](https://CRAN.R-project.org
 binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/japhir/snvecR/main)
 <!-- badges: end -->
 
-Easily calculate precession and obliquity from an orbital solution (OS,
-defaults to ZB18a from Zeebe and Lourens (2019)) and assumed or
+Easily calculate precession and obliquity from an astronomical solution
+(AS, defaults to ZB18a from Zeebe and Lourens (2019)) and assumed or
 reconstructed values for tidal dissipation (T<sub>d</sub>) and dynamical
 ellipticity (E<sub>d</sub>). This is a translation and adaptation of the
 C-code in the supplementary material to Zeebe and Lourens (2022), with
@@ -45,24 +46,31 @@ Here’s the main function that does the work in action:
 ``` r
 library(snvecR)
 solution <- snvec()
+#> This is snvecR VERSION: 3.7.7.9000 2023-06-27(or later)
+#> Richard E. Zeebe
+#> Ilja J. Kocken
+#> 
 #> Integration parameters:
 #> • `tend` = -1000 ka
 #> • `ed` = 1
 #> • `td` = 0
-#> • `orbital_solution` = "ZB18a"
-#> • `tres` = 0.4 kyr
+#> • `astronomical_solution` = "PT-ZB18a"
+#> • `os_ref_frame` = "HCI"
+#> • `os_omt` = defaulting to 75.594
+#> • `os_inct` = defaulting to 7.155
+#> • `tres` = -0.4 kyr
 #> • `atol` = 1e-05
 #> • `rtol` = 0
 #> • `solver` = "vode"
-#> ℹ started at "2023-05-08 13:39:45.6343"
+#> ℹ started at "2024-01-26 12:10:55.246008"
 #> Final values:
-#> • s[1][2][3]: 0.404184487124565 -0.0537555129057148 0.913036138471423
-#> • s-error = |s|-1: 0.353152142725588
+#> • s[1][2][3]: 0.404184487124565, -0.0537555129057148, and 0.913036138471423
+#> • s-error = |s|-1: -5.51290422495798e-05
 #> Final values:
 #> • obliquity: 0.413060472710089 rad
-#> • precession: -0.562357122261027 rad
-#> ℹ stopped at "2023-05-08 13:39:47.579519"
-#> ℹ total duration: 1.95s
+#> • precession: -0.562357122261026 rad
+#> ℹ stopped at "2024-01-26 12:10:56.69328"
+#> ℹ total duration: 1.45s
 ```
 
 see `?snvec` for further documentation.
@@ -73,14 +81,15 @@ the eccentricity envelope:
 ``` r
 library(ggplot2)
 solution |>
-  ggplot(aes(x = age, y = cp)) +
+  ggplot(aes(x = -t_ka, y = cp)) +
   labs(x = "Age (ka)", y = "(-)", colour = "Orbital Element") +
   # the age scale goes from old to young
   scale_x_reverse() +
   # plot climatic precession
   geom_line(aes(colour = "Climatic Precession")) +
-  # add the (interpolated) eccentricity envelope
-  geom_line(aes(y = eei, colour = "Eccentricity")) +
+  # add the eccentricity envelope
+  geom_line(aes(y = ee, colour = "Eccentricity"),
+            data = get_solution() |> dplyr::filter(t_ka > -1000)) +
   scale_color_discrete(type = c("skyblue", "black")) +
   theme(legend.pos = c(.9, .95))
 ```

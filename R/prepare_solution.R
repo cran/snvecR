@@ -1,18 +1,20 @@
-#' Prepare Orbital Solution
+#' Prepare Astronomical Solution
 #'
-#' Calculates helper columns from an orbital solution input.
+#' Calculates helper columns from an astronomical solution input.
 #'
-#' @param data The output of [get_solution()].
-#' It needs to contain columns:
+#' @export
+#' @param data A data frame with the following columns:
 #'
 #' * `t` Time \eqn{t} (days).
+#' * `ee` Eccentricity \eqn{e} (unitless).
 #' * `lph` Longitude of perihelion \eqn{\varpi} (degrees).
 #' * `lan` Longitude of the ascending node \eqn{\Omega} (degrees).
 #' * `inc` Inclination \eqn{I} (degrees).
+#' The easiest way to get this is with [get_solution()].
 # inherit quiet
-#' @inheritParams get_ZB18a
+#' @inheritParams get_ZB
 #' @returns A [tibble][tibble::tibble-package] with the new columns added.
-#' @seealso [get_ZB18a()] [get_solution()]
+#' @seealso [get_solution()]
 #'
 #' @details
 #' New columns include:
@@ -45,8 +47,21 @@
 #   normal vector \eqn{\vec{n}'}{n'}, relative to ECLIPJ2000.}
 # IOP = instantaneous orbit plane
 prepare_solution <- function(data, quiet = FALSE) {
-  if (!all(c("lph", "lan", "t", "inc") %in% colnames(data))) {
-    cli::cli_abort("Column names 't', 'lph', 'lan', 'inc' must be in data.")
+  mandatory_cols <- c("t", "ee", "inc", "lph", "lan")
+  if (!all(mandatory_cols %in% colnames(data))) {
+    if (all(c("t", "a", "e", "i", "om", "oom", "vpi", "mn") %in% colnames(data))) {
+      # we're dealing with orbitN output
+      cli::cli_alert_info("Renaming astronomical solution columns from orbitN syntax to snvec syntax.")
+      data <- data |> dplyr::rename(ee = .data$e,
+                                    inc = .data$i,
+                                    lph = .data$vpi,
+                                    lan = .data$oom)
+    } else {
+      cli::cli_abort(c(
+        "Column{?s} {.col {mandatory_cols}} must be present in 'data'.",
+        "x" = "Column{?s} {.col {mandatory_cols[!mandatory_cols %in% colnames(data)]}} {?is/are} missing."
+      ))
+    }
   }
 
   if (!quiet) cli::cli_alert_info("Calculating helper columns.")
@@ -55,7 +70,8 @@ prepare_solution <- function(data, quiet = FALSE) {
       lphu = unwrap(.data$lph),
       lanu = unwrap(.data$lan)
     ) |>
-    dplyr::mutate(age = -.data$t / KY2D, .after = "t") |>
+    dplyr::mutate(t_ka = .data$t / KY2D, .after = "t") |>
+    dplyr::mutate(age = -.data$t_ka, .after = "t_ka") |>
     dplyr::mutate(
       hh = .data$ee * sin(.data$lph / R2D),
       kk = .data$ee * cos(.data$lph / R2D),
