@@ -19,18 +19,17 @@
 
 A data frame with 62,501 rows and 3 columns:
 \describe{
-\item{age}{Age in thousands of years before present (ka).}
+\item{time}{Time in thousands of years (kyr).}
 \item{ecc}{Eccentricity \eqn{e} (unitless).}
 \item{inc}{Inclination \eqn{I} (degrees).}
 }
 }
 }
 \source{
-\itemize{
-\item All astronomical solutions by Zeebe can be found on
+All astronomical solutions by Zeebe can be found on
 \url{http://www.soest.hawaii.edu/oceanography/faculty/zeebe_files/Astro.html}.
+
 They can be loaded into R quickly, using \code{\link[=get_solution]{get_solution()}}.
-}
 }
 \description{
 Astronomical Solutions ZB17 for the past 100 Myr

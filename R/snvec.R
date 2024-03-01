@@ -5,8 +5,8 @@
 #' (\eqn{E_{d}}{Ed}) and tidal dissipation (\eqn{T_{d}}{Td}). It solves a set
 #' of ordinary differential equations.
 #'
-#' @param tend Final timestep in thousands of years before present (ka).
-#'   Defaults to `-1000` ka.
+#' @param tend Final timestep in thousands of years (kyr).
+#'   Defaults to `-1000` kyr.
 #' @param ed Dynamical ellipticity \eqn{E_{d}}{Ed}, normalized to modern.
 #'   Defaults to `1.0`.
 #' @param td Tidal dissipation \eqn{T_{d}}{Td}, normalized to modern. Defaults
@@ -33,7 +33,7 @@
 #' @param output Character vector with name of desired output. One of:
 #'
 #'   * `"nice"` (the default) A [tibble][tibble::tibble-package] with the
-#'     columns `time`, `t_ka`, `eei`, `epl`, `phi`, `cp`.
+#'     columns `time`, `eei`, `epl`, `phi`, `cp`.
 #'
 #'   * `"full"` A [tibble][tibble::tibble-package] with all the computed and
 #'     interpolated columns.
@@ -57,7 +57,7 @@
 #' does no transformations if it is already in `"J2000"`.
 #'
 #' For this, it uses \eqn{\Omega_{\odot} = 75.5940}{OMT = 75.5940} and
-#' \eqn{i_{\odot = 7.155}}{INCT = 7.155} as in Zeebe (2017). You can overwrite
+#' \eqn{i_{\odot} = 7.155}{INCT = 7.155} as in Zeebe (2017). You can overwrite
 #' these defaults with `os_omt` and `os_inct` if desired.
 #'
 #' @section ODE Solver:
@@ -65,16 +65,16 @@
 #' Note that the different ODE solver algorithm we use (Soetaert et al.,
 #' 2010) means that the R routine returns an evenly-spaced time grid, whereas
 #' the C-routine has a variable time-step.
-#' This means we need to explicitly step size (`tres`).
+#' This means we need to explicitly set the stepsize `tres`.
 #'
 #' @returns `snvec()` returns different output depending on the `outputs` argument.
 #'
 #' If `output = "nice"` (the default), returns a
 #' [tibble][tibble::tibble-package] with the following columns:
 #'
-#'   * `time` Time \eqn{t} (days).
-#'
-#'   * `t_ka` Time in thousands of years (ka).
+# #'   * `t` Time \eqn{t} (days).
+# #'
+#'   * `time` Time in thousands of years (kyr).
 #'
 # I removed this earlier
 # #'   * `eei` Astronomical solution's eccentricity \eqn{e}, interpolated to output
@@ -84,14 +84,14 @@
 #'
 #'   * `phi` Calculated Precession \eqn{\phi} (radians) from ECLIPJ2000.
 #'
-#'   * `cp` Calculated Climatic precession (-) as \eqn{e\sin(\varpi)}.
+#'   * `cp` Calculated Climatic precession (-) as \eqn{e\sin\bar{\omega}}.
 #'
-#' where \eqn{\varpi} is the longitude of perihelion relative to the moving equinox.
+#' where \eqn{\bar{\omega}} is the longitude of perihelion relative to the moving equinox.
 #'
 #' If `output = "all"` (for developers), additional columns are included,
 #' typically interpolated to output timescale.
 #'
-#'   * `sx`, `sy`, `sz` The \eqn{x}, \eqn{y}, and \eqn{z}-components of Earth's
+#'   * `sx`, `sy`, `sz` The \eqn{x}{s}, \eqn{y}, and \eqn{z}-components of Earth's
 #'   spin axis unit vector \eqn{\vec{s}}{s} in the heliocentric inertial
 #'   reference frame.
 #   this one is in HCI
@@ -158,9 +158,11 @@
 #'   Software, 33(9), 1–25. \doi{10.18637/jss.v033.i09}.
 #'
 #' @examples
-#' # default call
 #' \donttest{
+#' # default call
 #' snvec()
+#'
+#' # ignore the below, this is just to make CRAN builds happy!
 #' # remove the directory with the cached astronomical solution to clean up
 #' unlink(tools::R_user_dir("snvecR", which = "cache"), recursive = TRUE)
 #' }
@@ -168,7 +170,7 @@
 snvec <- function(tend = -1e3,
                   ed = 1,
                   td = 0,
-                  astronomical_solution = "PT-ZB18a",
+                  astronomical_solution = "full-ZB18a",
                   os_ref_frame = "HCI",
                   os_omt = NULL, os_inct = NULL,
                   tres = -0.4,
@@ -216,9 +218,9 @@ snvec <- function(tend = -1e3,
   }
 
   if (!"data.frame" %in% class(astronomical_solution) &&
-        !grepl("^PT-", astronomical_solution)) {
+        !grepl("^full-", astronomical_solution)) {
     cli::cli_abort(c("Astronomical Solution must contain all orbital parameters",
-                     "i" = "Did you mean to specify {.q PT-ZB18a}?"))
+                     "i" = "Did you mean to specify {.q full-ZB18a}?"))
   }
 
   hci_refs <- c("heliocentric intertial", "HCI")
@@ -268,9 +270,9 @@ snvec <- function(tend = -1e3,
 
   dat <- get_solution(astronomical_solution = astronomical_solution, quiet = quiet)
 
-  if ((sign(tend) != sign(dat$t_ka[2])) || (abs(tend) > max(abs(dat$t_ka)))) {
-    cli::cli_abort(c("{.var tend} must fall within astronomical solution age.",
-                     "i" = "The astronomical solution {sign(dat$t_ka[2])*max(abs(dat$t_ka))}.",
+  if ((sign(tend) != sign(dat$time[2])) || (abs(tend) > max(abs(dat$time)))) {
+    cli::cli_abort(c("{.var tend} must fall within astronomical solution time.",
+                     "i" = "The astronomical solution {sign(dat$time[2])*max(abs(dat$time))}.",
                      "x" = "{.var tend} = {tend}."
                      ))
   }
@@ -284,7 +286,7 @@ snvec <- function(tend = -1e3,
       "Ilja J. Kocken",
       "",
       "Integration parameters:",
-      "*" = "{.var tend} = {.val {tend}} ka",
+      "*" = "{.var tend} = {.val {tend}} kyr",
       "*" = "{.var ed} = {.val {ed}}",
       "*" = "{.var td} = {.val {td}}",
       "*" = "{.var astronomical_solution} = {.val {if ('data.frame' %in% class(astronomical_solution)) 'user provided' else astronomical_solution}}",
@@ -308,7 +310,7 @@ snvec <- function(tend = -1e3,
   ndn <- -4.6e-18 * D2S * td # 1/s => 1/d
   wdw <- 51 * ndn * NW0 # Lambeck80, see PTman
   tdg <- td # global Td
-  dts <- dat$t[2] - dat$t[1] # difference in time
+  dts <- dat$t[2] - dat$t[1] # difference in time in days
 
   ## initial values for the spin vector s
   ## [[file:snvec-3.7.5/snvec-3.7.5.c::=== finits()][finits()]]
@@ -467,15 +469,17 @@ snvec <- function(tend = -1e3,
   ## interpolate the full astronomical solution onto output timescale
   fin <- out |>
     tibble::as_tibble() |>
+    dplyr::rename(t = "time") |>
     dplyr::mutate(
-      t_ka = .data$time / KY2D,
-      nnx = approxdat(dat, "nnx")(.data$time),
-      nny = approxdat(dat, "nny")(.data$time),
-      nnz = approxdat(dat, "nnz")(.data$time),
-      eei = approxdat(dat, "ee")(.data$time),
-      inci = approxdat(dat, "inc")(.data$time),
-      lphi = approxdat(dat, "lphu")(.data$time),
-      lani = approxdat(dat, "lanu")(.data$time)
+      time = .data$t / KY2D, .after = "t") |>
+    dplyr::mutate(
+      nnx = approxdat(dat, "nnx")(.data$t),
+      nny = approxdat(dat, "nny")(.data$t),
+      nnz = approxdat(dat, "nnz")(.data$t),
+      eei = approxdat(dat, "ee")(.data$t),
+      inci = approxdat(dat, "inc")(.data$t),
+      lphi = approxdat(dat, "lphu")(.data$t),
+      lani = approxdat(dat, "lanu")(.data$t)
     )
 
   ## ## calculate obliquity
@@ -535,7 +539,7 @@ snvec <- function(tend = -1e3,
     # we transform the deSolve parameters into simple numeric columns
     # this is so they work better with things like bind_rows etc. via vctrs
     dplyr::mutate(dplyr::across(
-      tidyselect::all_of(c("time", "t_ka", "sx", "sy", "sz", "epl")),
+      tidyselect::all_of(c("t", "time", "sx", "sy", "sz", "epl")),
       as.numeric))
 
   if (output == "all") {
@@ -545,8 +549,7 @@ snvec <- function(tend = -1e3,
   if (output == "nice") {
     fin |>
       dplyr::select(tidyselect::all_of(c(
-        "time", "t_ka",
-        "epl", "phi", "cp"
+        "time", "epl", "phi", "cp"
       )))
   }
 }

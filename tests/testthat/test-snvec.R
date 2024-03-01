@@ -4,10 +4,10 @@ test_that("snvec() inputs are checked", {
   expect_error(snvec(tres = -Inf, quiet = TRUE))
   expect_error(snvec(tend = -1000, tres = 0.4, quiet = TRUE))
   expect_error(snvec(tend = 1000, tres = -0.4, quiet = TRUE))
-  expect_error(snvec(tend = 1000, tres = 0.4, astronomical_solution = "PT-ZB18a", quiet = TRUE))
+  expect_error(snvec(tend = 1000, tres = 0.4, astronomical_solution = "full-ZB18a", quiet = TRUE))
   expect_error(snvec(tend = -1000, tres = -0.4, quiet = TRUE,
-                     astronomical_solution = get_solution("PT-ZB18a", quiet = TRUE) |>
-                       mutate(t = -t, t_ka = -t_ka)))
+                     astronomical_solution = get_solution("full-ZB18a", quiet = TRUE) |>
+                       mutate(t = -t, time = -time)))
   expect_error(snvec(output = "banaan", quiet = TRUE))
   expect_error(snvec(solver = "banaan", quiet = TRUE))
   expect_error(snvec(astronomical_solution = "hoi", quiet = TRUE)) # same as get_solution
@@ -15,6 +15,7 @@ test_that("snvec() inputs are checked", {
   expect_error(snvec(os_ref_frame = "J2000", os_omt = 5, quiet = TRUE))
   expect_error(snvec(os_ref_frame = "J2000", os_inct = 7, quiet = TRUE))
 
+  # these are a bit annoying
   expect_warning(snvec(ed = 1.1001, tend = -1, tres = -.5, quiet = TRUE))
   expect_warning(snvec(ed = 0.8999, tend = -1, tres = -.5, quiet = TRUE))
   expect_warning(snvec(td = 1.2001, tend = -1, tres = -.5, quiet = TRUE))
@@ -40,7 +41,7 @@ test_that("snvec() works", {
                     # report only the columns of interest (the ones returned by the C-routine)
                     # this means that if I change my mind about which columns to report it doesn't matter,
                     # as long as the output of these columns remains the same.
-                    dplyr::select(dplyr::all_of(c("t_ka", "sx", "sy", "sz", "epl", "phi", "cp"))) |>
+                    dplyr::select(tidyselect::all_of(c("time", "sx", "sy", "sz", "epl", "phi", "cp"))) |>
                     # print the full 100 rows to monitor changes
                     print(n = 50))
 })
@@ -49,7 +50,7 @@ test_that("snvec() output columns are correct", {
   # we have the desired columns
   expect_equal(snvec(tend = -1, tres = -0.5, quiet = TRUE, output = "nice") |>
                  colnames(),
-               c("time", "t_ka", "epl", "phi", "cp"))
+               c("time", "epl", "phi", "cp"))
   # we have a deSolve matrix
   expect_equal(snvec(tend = -1, tres = -0.5, quiet = TRUE, output = "ode") |>
                  class(),

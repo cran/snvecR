@@ -8,7 +8,7 @@ snvec(
   tend = -1000,
   ed = 1,
   td = 0,
-  astronomical_solution = "PT-ZB18a",
+  astronomical_solution = "full-ZB18a",
   os_ref_frame = "HCI",
   os_omt = NULL,
   os_inct = NULL,
@@ -21,8 +21,8 @@ snvec(
 )
 }
 \arguments{
-\item{tend}{Final timestep in thousands of years before present (ka).
-Defaults to \code{-1000} ka.}
+\item{tend}{Final timestep in thousands of years (kyr).
+Defaults to \code{-1000} kyr.}
 
 \item{ed}{Dynamical ellipticity \eqn{E_{d}}{Ed}, normalized to modern.
 Defaults to \code{1.0}.}
@@ -31,7 +31,7 @@ Defaults to \code{1.0}.}
 to \code{0.0}.}
 
 \item{astronomical_solution}{Character vector with the name of the desired
-solution.}
+solution. Defaults to \code{"full-ZB18a"}.}
 
 \item{os_ref_frame}{Character vector with the reference frame of the astronomical
 solution. Either \code{"HCI"} for heliocentric inertial reference frame or
@@ -65,7 +65,7 @@ a variable timestep.}
 \item{output}{Character vector with name of desired output. One of:
 \itemize{
 \item \code{"nice"} (the default) A \link[tibble:tibble-package]{tibble} with the
-columns \code{time}, \code{t_ka}, \code{eei}, \code{epl}, \code{phi}, \code{cp}.
+columns \code{time}, \code{eei}, \code{epl}, \code{phi}, \code{cp}.
 \item \code{"full"} A \link[tibble:tibble-package]{tibble} with all the computed and
 interpolated columns.
 \item \code{"ode"} A matrix with the output of the ODE solver.
@@ -77,19 +77,18 @@ interpolated columns.
 If \code{output = "nice"} (the default), returns a
 \link[tibble:tibble-package]{tibble} with the following columns:
 \itemize{
-\item \code{time} Time \eqn{t} (days).
-\item \code{t_ka} Time in thousands of years (ka).
+\item \code{time} Time in thousands of years (kyr).
 \item \code{epl} Calculated Obliquity \eqn{\epsilon} (radians).
 \item \code{phi} Calculated Precession \eqn{\phi} (radians) from ECLIPJ2000.
-\item \code{cp} Calculated Climatic precession (-) as \eqn{e\sin(\varpi)}.
+\item \code{cp} Calculated Climatic precession (-) as \eqn{e\sin\bar{\omega}}.
 }
 
-where \eqn{\varpi} is the longitude of perihelion relative to the moving equinox.
+where \eqn{\bar{\omega}} is the longitude of perihelion relative to the moving equinox.
 
 If \code{output = "all"} (for developers), additional columns are included,
 typically interpolated to output timescale.
 \itemize{
-\item \code{sx}, \code{sy}, \code{sz} The \eqn{x}, \eqn{y}, and \eqn{z}-components of Earth's
+\item \code{sx}, \code{sy}, \code{sz} The \eqn{x}{s}, \eqn{y}, and \eqn{z}-components of Earth's
 spin axis unit vector \eqn{\vec{s}}{s} in the heliocentric inertial
 reference frame.
 }
@@ -126,7 +125,7 @@ converts all outputs to J2000 if the \code{os_ref_frame} is equal to \code{"HCI"
 does no transformations if it is already in \code{"J2000"}.
 
 For this, it uses \eqn{\Omega_{\odot} = 75.5940}{OMT = 75.5940} and
-\eqn{i_{\odot = 7.155}}{INCT = 7.155} as in Zeebe (2017). You can overwrite
+\eqn{i_{\odot} = 7.155}{INCT = 7.155} as in Zeebe (2017). You can overwrite
 these defaults with \code{os_omt} and \code{os_inct} if desired.
 }
 
@@ -136,13 +135,15 @@ these defaults with \code{os_omt} and \code{os_inct} if desired.
 Note that the different ODE solver algorithm we use (Soetaert et al.,
 2010) means that the R routine returns an evenly-spaced time grid, whereas
 the C-routine has a variable time-step.
-This means we need to explicitly step size (\code{tres}).
+This means we need to explicitly set the stepsize \code{tres}.
 }
 
 \examples{
-# default call
 \donttest{
+# default call
 snvec()
+
+# ignore the below, this is just to make CRAN builds happy!
 # remove the directory with the cached astronomical solution to clean up
 unlink(tools::R_user_dir("snvecR", which = "cache"), recursive = TRUE)
 }
