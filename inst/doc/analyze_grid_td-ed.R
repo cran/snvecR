@@ -4,6 +4,7 @@ knitr::opts_chunk$set(
   comment = "#>",
   fig.width = 12, fig.height = 8
 )
+modern_r <- getRversion() >= "4.1.0"
 
 ## ----setup--------------------------------------------------------------------
 library(tibble)  # nice dataframes
@@ -14,13 +15,13 @@ library(ggplot2) # nice plots
 library(snvecR)  # this package
 
 ## ----make-grid----------------------------------------------------------------
-biggrid <- expand.grid(Td = c(0, 0.5, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2),
-              Ed = c(1.000, 0.998, 1.005, 1.012)) |>
-    as_tibble()
-    # that's 32 rows
+biggrid <- as_tibble(
+  expand.grid(Td = c(0, 0.5, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2),
+              Ed = c(1.000, 0.998, 1.005, 1.012)))
+# that's 32 rows
 biggrid
 
-## ----update-grid--------------------------------------------------------------
+## ----update-grid, eval = modern_r---------------------------------------------
 biggrid <- biggrid |>
     # for now only for 1000 years at very high tolerance so it's fast
     mutate(atol = 1e-4, tend = -1e3)
@@ -28,7 +29,7 @@ biggrid <- biggrid |>
     # tolerance.
     ## mutate(tol = 1e-7, tend = -1e5)
 
-## ----snvec-tail---------------------------------------------------------------
+## ----snvec-tail, eval = modern_r----------------------------------------------
 snvec_tail <- function(..., n = 100) {
   # do the fit with the parameters in ...
   snvec(...) |>
@@ -36,7 +37,7 @@ snvec_tail <- function(..., n = 100) {
     tail(n = n)
 }
 
-## ----massive-compute----------------------------------------------------------
+## ----massive-compute, eval = modern_r-----------------------------------------
 biggrid <- biggrid |>
     # apply our new function!
     mutate(sol = pmap(list(td = Td, ed = Ed, tend = tend, atol = atol),
@@ -57,15 +58,15 @@ biggrid <- biggrid |>
 ## ----read-old, eval=FALSE-----------------------------------------------------
 #  biggrid <- readr::read_rds("out/2023-04-05_biggrid.rds")
 
-## ----check--------------------------------------------------------------------
+## ----check, eval = modern_r---------------------------------------------------
 glimpse(biggrid)
 
-## ----unnest-------------------------------------------------------------------
+## ----unnest, eval = modern_r--------------------------------------------------
 expanded <- biggrid |>
   unnest(sol)
 expanded
 
-## ----plot---------------------------------------------------------------------
+## ----plot, eval = modern_r----------------------------------------------------
 expanded |>
   ggplot(aes(x = time, y = cp,
              colour = factor(Td),
@@ -85,7 +86,7 @@ expanded |>
               filter(time > -1000) |>
               filter(time < -500))
 
-## ----add-filenames------------------------------------------------------------
+## ----add-filenames, eval = modern_r-------------------------------------------
 biggrid <- biggrid |>
   # get rid of sol column
   select(-sol) |>
@@ -94,14 +95,14 @@ biggrid <- biggrid |>
   mutate(file = glue::glue("{tempdir()}/2023-04-13_biggrid_{Td}_{Ed}_{atol}_{tend}.rds"))
 biggrid
 
-## ----snvec-save---------------------------------------------------------------
+## ----snvec-save, eval = modern_r----------------------------------------------
 snvec_save <- function(..., file) {
   snvec(...) |>
     readr::write_rds(file)
   cli::cli_inform("Wrote file {.file {file}}.")
 }
 
-## ----run-pwalk----------------------------------------------------------------
+## ----run-pwalk, eval = modern_r-----------------------------------------------
 biggrid |>
   # in this case we make sure that column names are identical to argument names
   # so that the list (in this case tibble/data.frame) is matched to the correct
@@ -113,7 +114,7 @@ biggrid |>
                # show progress bar
                .progress = "snvec to file")
 
-## ----read-files---------------------------------------------------------------
+## ----read-files, eval = modern_r----------------------------------------------
 biggrid |> # limit to a few experiments
   ## slice(c(1, 15, 32)) |>
   # in this case that's not necessary because we limited it to a very
