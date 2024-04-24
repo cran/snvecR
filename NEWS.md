@@ -1,4 +1,19 @@
+# snvecR 3.9.3
+* Added a package option for the cache directory.
+  * Set it with options(snvecR.cachedir = "/you/path").
+  * It still defaults to the user's cache directory.
+* Made all tests, vignettes, and examples use temporary directories rather than the user's cache dir.
+
+# snvecR 3.9.2
+* Made the package work for R >= 3.6.x
+  * added backports for tools::R_user_dir
+  * added GitHub CI that tests the installation on windows and mac with R 3.6.3
+* Improved info messages and README
+
 # snvecR 3.9.1
+* Removed a lot of dependencies
+* removed all |> from functions and tests
+* Should work for R >= 4.0.0 now
 
 # snvecR 3.9.0
 * Refactor `age` in ka to `time` in kyr throughout.

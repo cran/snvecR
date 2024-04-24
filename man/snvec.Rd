@@ -140,12 +140,13 @@ This means we need to explicitly set the stepsize \code{tres}.
 
 \examples{
 \donttest{
+\dontshow{
+# set the cachedir to a temporary directory
+pth <- withr::local_tempdir(pattern = "snvecR")
+withr::local_options(snvecR.cachedir = pth)
+}
 # default call
-snvec()
-
-# ignore the below, this is just to make CRAN builds happy!
-# remove the directory with the cached astronomical solution to clean up
-unlink(tools::R_user_dir("snvecR", which = "cache"), recursive = TRUE)
+snvec(tend = -1e3, ed = 1, td = 0, tres = -0.4)
 }
 }
 \references{

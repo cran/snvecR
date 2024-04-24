@@ -1,7 +1,9 @@
-## VER <- "snvecR VERSION: 3.7.7 2023-06-09"
-## VER <- "snvecR VERSION: 3.8.0 2024-01-26"
-## VER <- "snvecR VERSION: 3.9.0 2024-02-29"
-VER <- "snvecR VERSION: 3.9.1 2024-03-04"
+VER <- glue::glue("snvecR VERSION: {packageVersion('snvecR')} {if(!is.na(packageDate('snvecR'))) packageDate('snvecR') else Sys.Date()}")
+
+cachedir <- function() {
+  def <- R_user_dir("snvecR", which = "cache")
+  getOption("snvecR.cachedir", default = def)
+}
 
 AU <- 1.49597870700e11 # m
 GM <- 1.32712440041e20 # m3/s2

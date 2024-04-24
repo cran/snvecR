@@ -159,12 +159,13 @@
 #'
 #' @examples
 #' \donttest{
+#' \dontshow{
+#' # set the cachedir to a temporary directory
+#' pth <- withr::local_tempdir(pattern = "snvecR")
+#' withr::local_options(snvecR.cachedir = pth)
+#' }
 #' # default call
-#' snvec()
-#'
-#' # ignore the below, this is just to make CRAN builds happy!
-#' # remove the directory with the cached astronomical solution to clean up
-#' unlink(tools::R_user_dir("snvecR", which = "cache"), recursive = TRUE)
+#' snvec(tend = -1e3, ed = 1, td = 0, tres = -0.4)
 #' }
 #' @export
 snvec <- function(tend = -1e3,
@@ -182,45 +183,55 @@ snvec <- function(tend = -1e3,
 
   outputs <- c("nice", "all", "ode")
   if (!output %in% outputs) {
-    cli::cli_abort(c("{.var output} must be one of {.or {.q {outputs}}}.",
-                     "x" = "You've supplied {.q {output}}."))
+    cli::cli_abort(c(
+      "{.var output} must be one of {.or {.q {outputs}}}.",
+      "x" = "You've supplied {.q {output}}."
+    ))
   }
 
   ## tres
   if (sign(tres) != sign(tend)) {
-    cli::cli_abort(c("{.var tres} must be given in the same sign as {.var tend}.",
-                     "i" = "{.var tres} = {tres}",
-                     "i" = "{.var tend} = {tend}"
-                     ))
+    cli::cli_abort(c(
+      "{.var tres} must be given in the same sign as {.var tend}.",
+      "i" = "{.var tres} = {tres}",
+      "i" = "{.var tend} = {tend}"
+    ))
   }
 
 
   ## a quick dumb input test for now
   if (abs(tres) > abs(tend)) {
-    cli::cli_abort(c("abs({.var tres}) must be < abs({.var tend}).",
-                     "i" = "{.var tres} = {tres}",
-                     "i" = "{.var tend} = {tend}"
-                     ))
+    cli::cli_abort(c(
+      "abs({.var tres}) must be < abs({.var tend}).",
+      "i" = "{.var tres} = {tres}",
+      "i" = "{.var tend} = {tend}"
+    ))
   }
 
   # this warning is too strict and kind of annoying
   ## if (ed < .998 | ed > 1.0005) {
   if (ed < .9 | ed > 1.1) {
-    cli::cli_warn(c("!" = "Dynamic ellipticity likely varied between 0.9980 and 1.0005 during the past 45 Ma!",
-                    "i" = "{.var ed} = {ed}",
-                    "*" = "See Zeebe & Lourens 2022 Pal&Pal <https://doi.org/10.1029/2021PA004349>."))
+    cli::cli_warn(c(
+      "Dynamic ellipticity likely varied between 0.9980 and 1.0005 during the past 45 Ma!",
+      "i" = "{.var ed} = {ed}",
+      "*" = "See Zeebe & Lourens 2022 Pal&Pal <https://doi.org/10.1029/2021PA004349>."
+    ))
   }
 
   if (td < 0 | td > 1.2) {
-    cli::cli_warn(c("Tidal dissipation likely varied between 0 and 1!",
-                    "i" = "{.var td} = {td}",
-                    "*" = "See Zeebe & Lourens 2022 Pal&Pal <https://doi.org/10.1029/2021PA004349>."))
+    cli::cli_warn(c(
+      "Tidal dissipation likely varied between 0 and 1!",
+      "i" = "{.var td} = {td}",
+      "*" = "See Zeebe & Lourens 2022 Pal&Pal <https://doi.org/10.1029/2021PA004349>."
+    ))
   }
 
   if (!"data.frame" %in% class(astronomical_solution) &&
         !grepl("^full-", astronomical_solution)) {
-    cli::cli_abort(c("Astronomical Solution must contain all orbital parameters",
-                     "i" = "Did you mean to specify {.q full-ZB18a}?"))
+    cli::cli_abort(c(
+      "Astronomical Solution must contain all orbital parameters",
+      "i" = "Did you mean to specify {.q full-ZB18a}?"
+    ))
   }
 
   hci_refs <- c("heliocentric intertial", "HCI")
@@ -240,10 +251,14 @@ snvec <- function(tend = -1e3,
   # specify a non-default os_ref_frame
   if (os_ref_frame != "HCI") {
     if (!is.null(os_omt)) {
-      cli::cli_abort("Specified both {.var os_ref_frame} and {.var os_omt}.")
+      cli::cli_abort(
+        "Specified both {.var os_ref_frame} and {.var os_omt}."
+      )
     }
     if (!is.null(os_inct)) {
-      cli::cli_abort("Specified both {.var os_ref_frame} and {.var os_inct}.")
+      cli::cli_abort(
+        "Specified both {.var os_ref_frame} and {.var os_inct}."
+      )
     }
   }
 
@@ -271,15 +286,16 @@ snvec <- function(tend = -1e3,
   dat <- get_solution(astronomical_solution = astronomical_solution, quiet = quiet)
 
   if ((sign(tend) != sign(dat$time[2])) || (abs(tend) > max(abs(dat$time)))) {
-    cli::cli_abort(c("{.var tend} must fall within astronomical solution time.",
-                     "i" = "The astronomical solution {sign(dat$time[2])*max(abs(dat$time))}.",
-                     "x" = "{.var tend} = {tend}."
-                     ))
+    cli::cli_abort(c(
+      "{.var tend} must fall within astronomical solution time.",
+      "i" = "The astronomical solution {sign(dat$time[2])*max(abs(dat$time))}.",
+      "x" = "{.var tend} = {tend}."
+    ))
   }
 
   # message user about inputs
   if (!quiet) {
-    startdate <- lubridate::now()
+    startdate <- Sys.time()
     cli::cli_inform(c(
       "This is {VER}",
       "Richard E. Zeebe",
@@ -479,14 +495,6 @@ snvec <- function(tend = -1e3,
                        lani = approxdat(dat, "lanu")(.data$t)
                        )
 
-  ## ## calculate obliquity
-  ## fin <- fin |>
-  ##   # calculate the dotproduct, Richard's vvdot
-  ##   dplyr::mutate(
-  ##     tmp = .data$sx * .data$nnx + .data$sy * .data$nny + .data$sz * .data$nnz,
-  ##     epl = acos(.data$tmp)
-  ##   )
-
   fin <- dplyr::mutate(dplyr::rowwise(fin),
     # for each row, NOTE this makes it very slow!!
     # extract sx, sy, sz, and nnx, nny, nnz
@@ -507,24 +515,25 @@ snvec <- function(tend = -1e3,
       # get 2nd and 1st column of up
 
       ## calculate axial precession
-      phi = map2_dbl(.data$up[2, ], .data$up[1, ], atan2)
+      phi = purrr::map2_dbl(.data$up[2, ], .data$up[1, ], atan2)
       )
 
   fin <- dplyr::mutate(dplyr::ungroup(fin), # end rowwise
       # normalize to first value of phi
-      phi = .data$phi - first(.data$phi),
+      phi = .data$phi - dplyr::first(.data$phi),
       # calculate climatic precession
       cp = .data$eei * sin((.data$lphi + OMT) / R2D - .data$phi)
     )
 
   ## message user about final values
   if (!quiet) {
+    stopdate <- Sys.time()
     cli::cli_inform(
       c("Final values:",
         "*" = "obliquity: {.val {fin[nrow(fin), 'epl']}} rad",
         "*" = "precession: {.val {fin[nrow(fin), 'phi']}} rad",
-        "i" = "stopped at {.q {lubridate::now()}}",
-        "i" = "total duration: {.val {lubridate::as.duration(round(lubridate::now() - startdate, 2))}}"
+        "i" = "stopped at {.q {stopdate}}",
+        "i" = "total duration: {.val {round(stopdate - startdate, 2)}}"
         )
     )
   }

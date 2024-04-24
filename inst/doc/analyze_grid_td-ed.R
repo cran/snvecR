@@ -4,7 +4,9 @@ knitr::opts_chunk$set(
   comment = "#>",
   fig.width = 12, fig.height = 8
 )
-modern_r <- getRversion() >= "4.1.0"
+## modern_r <- getRversion() >= "4.1.0"
+pth <- withr::local_tempdir(pattern = "snvecR")
+withr::local_options(list(snvecR.cachedir = pth))
 
 ## ----setup--------------------------------------------------------------------
 library(tibble)  # nice dataframes
@@ -21,7 +23,7 @@ biggrid <- as_tibble(
 # that's 32 rows
 biggrid
 
-## ----update-grid, eval = modern_r---------------------------------------------
+## ----update-grid--------------------------------------------------------------
 biggrid <- biggrid |>
     # for now only for 1000 years at very high tolerance so it's fast
     mutate(atol = 1e-4, tend = -1e3)
@@ -29,7 +31,7 @@ biggrid <- biggrid |>
     # tolerance.
     ## mutate(tol = 1e-7, tend = -1e5)
 
-## ----snvec-tail, eval = modern_r----------------------------------------------
+## ----snvec-tail---------------------------------------------------------------
 snvec_tail <- function(..., n = 100) {
   # do the fit with the parameters in ...
   snvec(...) |>
@@ -37,7 +39,7 @@ snvec_tail <- function(..., n = 100) {
     tail(n = n)
 }
 
-## ----massive-compute, eval = modern_r-----------------------------------------
+## ----massive-compute----------------------------------------------------------
 biggrid <- biggrid |>
     # apply our new function!
     mutate(sol = pmap(list(td = Td, ed = Ed, tend = tend, atol = atol),
@@ -58,15 +60,15 @@ biggrid <- biggrid |>
 ## ----read-old, eval=FALSE-----------------------------------------------------
 #  biggrid <- readr::read_rds("out/2023-04-05_biggrid.rds")
 
-## ----check, eval = modern_r---------------------------------------------------
+## ----check--------------------------------------------------------------------
 glimpse(biggrid)
 
-## ----unnest, eval = modern_r--------------------------------------------------
+## ----unnest-------------------------------------------------------------------
 expanded <- biggrid |>
   unnest(sol)
 expanded
 
-## ----plot, eval = modern_r----------------------------------------------------
+## ----plot---------------------------------------------------------------------
 expanded |>
   ggplot(aes(x = time, y = cp,
              colour = factor(Td),
@@ -86,7 +88,7 @@ expanded |>
               filter(time > -1000) |>
               filter(time < -500))
 
-## ----add-filenames, eval = modern_r-------------------------------------------
+## ----add-filenames------------------------------------------------------------
 biggrid <- biggrid |>
   # get rid of sol column
   select(-sol) |>
@@ -95,14 +97,16 @@ biggrid <- biggrid |>
   mutate(file = glue::glue("{tempdir()}/2023-04-13_biggrid_{Td}_{Ed}_{atol}_{tend}.rds"))
 biggrid
 
-## ----snvec-save, eval = modern_r----------------------------------------------
+## ----snvec-save---------------------------------------------------------------
 snvec_save <- function(..., file) {
   snvec(...) |>
     readr::write_rds(file)
-  cli::cli_inform("Wrote file {.file {file}}.")
+  cli::cli_inform(
+    "Wrote file {.file {file}}."
+  )
 }
 
-## ----run-pwalk, eval = modern_r-----------------------------------------------
+## ----run-pwalk----------------------------------------------------------------
 biggrid |>
   # in this case we make sure that column names are identical to argument names
   # so that the list (in this case tibble/data.frame) is matched to the correct
@@ -114,7 +118,7 @@ biggrid |>
                # show progress bar
                .progress = "snvec to file")
 
-## ----read-files, eval = modern_r----------------------------------------------
+## ----read-files---------------------------------------------------------------
 biggrid |> # limit to a few experiments
   ## slice(c(1, 15, 32)) |>
   # in this case that's not necessary because we limited it to a very
