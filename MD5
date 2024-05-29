@@ -1,6 +1,6 @@
-283517cf923d2fedc253b09f000746c0 *DESCRIPTION
+c1923a3b0f3fbdc304d9862fb3c2db4f *DESCRIPTION
 4f28eb40ee2ded54df45a906284980fa *NAMESPACE
-9421d881f06f8ad8f5850ea84bfc3847 *NEWS.md
+888e82ae6f41f69d66f8dfaa864d9476 *NEWS.md
 f3766012b9770138dc9aad7aa12827f4 *R/data.R
 5ab242b9aecb941f3db84bdc4099db6d *R/euler.R
 6e1796a0af7b0a6e6757d84e6e60ba81 *R/get_solution.R
@@ -11,12 +11,12 @@ b1b96eeb5e084ee424fb1897e71ccbb0 *R/prepare_solution.R
 e79460d2bfc22b230f39844587d43025 *R/snvecR-package.R
 e97691bd1004b2b03ab0e855e6c9c9af *R/unwrap.R
 ce072deaca6c5e84366c7276ad5a179e *README.md
-20c8d3f97d93e2e318a22508275b5a02 *build/partial.rdb
-c620863b1e1530d1173491cefa0fc371 *build/vignette.rds
-412790b0645dbc41c9f5601380138b07 *inst/CITATION
+f61db891eb928123aba4412ca322f508 *build/partial.rdb
+b2343c335e0e6cefd1765786c21927ca *build/vignette.rds
+cdd4f8dfbfe73fcdeac483a81c871eb3 *inst/CITATION
 07347535042eb1f05242e5507a64e910 *inst/doc/analyze_grid_td-ed.R
 d36bf2577ad150d56abb946aa277023f *inst/doc/analyze_grid_td-ed.Rmd
-3b7fe1608c0501830da93ad8f6346acf *inst/doc/analyze_grid_td-ed.html
+383ce241ce0af2435c57d2003df16882 *inst/doc/analyze_grid_td-ed.html
 a670e7f37d161151c44c2951a804f17e *man/ZB17.Rd
 8ff8459036e95808827cfe2a90ed2f7b *man/ZB18a_100.Rd
 23788165f1341a713e9e74b83514914c *man/ZB18a_300.Rd
@@ -32,7 +32,7 @@ dbf67c368e15b7a30bff39af8ab8a336 *man/snvecR-package.Rd
 dc1c1b34427e04decec512e50a42e6bb *tests/testthat/_snaps/get_solution.md
 c43b38a6400e26483476999c6363cd45 *tests/testthat/_snaps/snvec.md
 d39e80262986665f15064cc234e384dd *tests/testthat/test-euler.R
-433428d73488d8ac95c7a39eb8144ebf *tests/testthat/test-get_solution.R
+83a07cb887ecf55a5417c6a6d4c2b58e *tests/testthat/test-get_solution.R
 7092ff2bc1495349f8aa587dab582bbb *tests/testthat/test-interpolation.R
 f2b68804f3ef68e668bbe526b146e79c *tests/testthat/test-prepare_solution.R
 ecb30af730a92173d03a72f56b0f32b2 *tests/testthat/test-snvec.R
