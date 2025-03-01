@@ -1,4 +1,10 @@
+# snvecR 3.10.0
+* Added support for reading ZB23.Rxx and pre-computed PT-ZB18a solutions.
+* snvec() now also returns lpx by default.
+* CRAN tests no longer rely on downloading the solutions.
+
 # snvecR 3.9.4
+* Made error tests of get_solution() use temporary directory.
 
 # snvecR 3.9.3
 * Added a package option for the cache directory.

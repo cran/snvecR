@@ -58,7 +58,7 @@ biggrid <- biggrid |>
     ## write_rds("out/2023-04-05_biggrid.rds")
 
 ## ----read-old, eval=FALSE-----------------------------------------------------
-#  biggrid <- readr::read_rds("out/2023-04-05_biggrid.rds")
+# biggrid <- readr::read_rds("out/2023-04-05_biggrid.rds")
 
 ## ----check--------------------------------------------------------------------
 glimpse(biggrid)

@@ -84,6 +84,8 @@
 #'
 #'   * `phi` Calculated Precession \eqn{\phi} (radians) from ECLIPJ2000.
 #'
+#'   * `lpx` Calculated Longitude of Perihelion with respect to the moving node \eqn{\bar{\omega}}.
+#'
 #'   * `cp` Calculated Climatic precession (-) as \eqn{e\sin\bar{\omega}}.
 #'
 #' where \eqn{\bar{\omega}} is the longitude of perihelion relative to the moving equinox.
@@ -182,7 +184,7 @@ snvec <- function(tend = -1e3,
                   output = "nice") {
 
   outputs <- c("nice", "all", "ode")
-  if (!output %in% outputs) {
+  if (!any(output == outputs)) {
     cli::cli_abort(c(
       "{.var output} must be one of {.or {.q {outputs}}}.",
       "x" = "You've supplied {.q {output}}."
@@ -226,7 +228,7 @@ snvec <- function(tend = -1e3,
     ))
   }
 
-  if (!"data.frame" %in% class(astronomical_solution) &&
+  if (!any("data.frame" == class(astronomical_solution)) &&
         !grepl("^full-", astronomical_solution)) {
     cli::cli_abort(c(
       "Astronomical Solution must contain all orbital parameters",
@@ -236,15 +238,15 @@ snvec <- function(tend = -1e3,
 
   hci_refs <- c("heliocentric intertial", "HCI")
   j2000_refs <- c("ecliptic", "ECLIPJ2000", "J2000")
-  if (!os_ref_frame %in% c(hci_refs, j2000_refs)) {
+  if (!any(os_ref_frame == c(hci_refs, j2000_refs))) {
     cli::cli_abort(c(
       "i" = "{.var os_ref_frame} must be one of {.or {.q {reference_frames}}}",
       "x" = "{.var os_ref_frame} = {.q {os_ref_frame}}"
     ))
   } else {
     # get rid of aliases
-    if (os_ref_frame %in% hci_refs) os_ref_frame <- "HCI"
-    if (os_ref_frame %in% j2000_refs) os_ref_frame <- "J2000"
+    if (any(os_ref_frame == hci_refs)) os_ref_frame <- "HCI"
+    if (any(os_ref_frame == j2000_refs)) os_ref_frame <- "J2000"
   }
 
   # if the user specifies a value for os_omt and/or os_inct, they cannot
@@ -288,7 +290,7 @@ snvec <- function(tend = -1e3,
   if ((sign(tend) != sign(dat$time[2])) || (abs(tend) > max(abs(dat$time)))) {
     cli::cli_abort(c(
       "{.var tend} must fall within astronomical solution time.",
-      "i" = "The astronomical solution {sign(dat$time[2])*max(abs(dat$time))}.",
+      "i" = "The astronomical solution max time is {sign(dat$time[2])*max(abs(dat$time))}.",
       "x" = "{.var tend} = {tend}."
     ))
   }
@@ -305,7 +307,7 @@ snvec <- function(tend = -1e3,
       "*" = "{.var tend} = {.val {tend}} kyr",
       "*" = "{.var ed} = {.val {ed}}",
       "*" = "{.var td} = {.val {td}}",
-      "*" = "{.var astronomical_solution} = {.val {if ('data.frame' %in% class(astronomical_solution)) 'user provided' else astronomical_solution}}",
+      "*" = "{.var astronomical_solution} = {.val {if (any('data.frame' == class(astronomical_solution))) 'user provided' else astronomical_solution}}",
       "*" = "{.var os_ref_frame} = {.val {os_ref_frame}}",
       "*" = "{.var os_omt} = {if (is.null(os_omt)) 'defaulting to' else ''} {.val {OMT}}",
       "*" = "{.var os_inct} = {if (is.null(os_inct)) 'defaulting to' else ''} {.val {INCT}}",
@@ -491,38 +493,48 @@ snvec <- function(tend = -1e3,
                        nnz = approxdat(dat, "nnz")(.data$t),
                        eei = approxdat(dat, "ee")(.data$t),
                        inci = approxdat(dat, "inc")(.data$t),
-                       lphi = approxdat(dat, "lphu")(.data$t),
+                       lphi = approxdat(dat, "lph")(.data$t),
+                       lphui = approxdat(dat, "lphu")(.data$t),
                        lani = approxdat(dat, "lanu")(.data$t)
                        )
 
-  fin <- dplyr::mutate(dplyr::rowwise(fin),
-    # for each row, NOTE this makes it very slow!!
-    # extract sx, sy, sz, and nnx, nny, nnz
-      # create list columns of vectors
-      u = list(matrix(c(.data$sx, .data$sy, .data$sz), ncol = 1, nrow = 3)),
-      nv = list(matrix(c(.data$nnx, .data$nny, .data$nnz), ncol = 1, nrow = 3)),
-
+  fin <- dplyr::mutate(fin,
       # calculate obliquity
       ## tmp = pracma::dot(.data$u, .data$nv), # get rid of dependency
       tmp = .data$sx * .data$nnx + .data$sy * .data$nny + .data$sz * .data$nnz,
       # calculate obliquity
-      epl = acos(.data$tmp),
+      epl = acos(.data$tmp))
 
-      # coords: fixed => moving orbit plane
-      up = list(euler(.data$u, .data$inci / R2D, .data$lani / R2D, FALSE)),
-      # coords: relative to phi(t=0)=0 at J2000
-      up = list(euler(.data$up, 0, -(.data$lani + OMT) / R2D + pi / 2, FALSE)),
-      # get 2nd and 1st column of up
+  ## fin <- dplyr::mutate(dplyr::rowwise(fin),
+    # for each row, NOTE this makes it very slow!!
+  ## fin <- dplyr::mutate(fin,
+    # extract sx, sy, sz, and nnx, nny, nnz
+      # create list columns of vectors
+      ## u = list(matrix(c(.data$sx, .data$sy, .data$sz), ncol = 1, nrow = 3)),
+      ## nv = list(matrix(c(.data$nnx, .data$nny, .data$nnz), ncol = 1, nrow = 3)),
+                       ## u = purrr::pmap(list(.data$sx, .data$sy, .data$sz), c))
+                       ## u = list(c(.data$sx, .data$sy, .data$sz)))
+  ## fin <- dplyr::mutate(dplyr::ungroup(fin), # end rowwise
 
+  fin$u <- Map(c, fin$sx, fin$sy, fin$sz)
+  # Map is slightly (but not a lot) faster than purrr::map
+  fin$up <- Map(euler, s = fin$u, inc = fin$inci / R2D, lan = fin$lani / R2D)
+  # coords: relative to phi(t=0)=0 at J2000
+  fin$up <- Map(euler, s = fin$up, inc = 0, lan = -(fin$lani + OMT) / R2D + pi / 2)
+
+  atan_self <- function(x) {
+    atan2(x[2], x[1])
+  }
+  fin <- dplyr::mutate(fin,
       ## calculate axial precession
-      phi = purrr::map2_dbl(.data$up[2, ], .data$up[1, ], atan2)
-      )
-
-  fin <- dplyr::mutate(dplyr::ungroup(fin), # end rowwise
+      # get 2nd and 1st value of up
+      phi = purrr::map_dbl(.data$up, .f = atan_self),
       # normalize to first value of phi
       phi = .data$phi - dplyr::first(.data$phi),
+      # calculate longitude of perihelion with respect to moving equinox
+      lpx = (.data$lphui + OMT) / R2D - .data$phi,
       # calculate climatic precession
-      cp = .data$eei * sin((.data$lphi + OMT) / R2D - .data$phi)
+      cp = .data$eei * sin(.data$lpx)
     )
 
   ## message user about final values
@@ -543,7 +555,7 @@ snvec <- function(tend = -1e3,
   # this is so they work better with things like bind_rows etc. via vctrs
   fin <- dplyr::mutate(fin,
                        dplyr::across(
-                         tidyselect::all_of(c("t", "time", "sx", "sy", "sz", "epl")),
+                         tidyselect::all_of(c("t", "time", "sx", "sy", "sz", "epl", "tmp")),
                          as.numeric))
 
   if (output == "all") {
@@ -552,6 +564,6 @@ snvec <- function(tend = -1e3,
 
   if (output == "nice") {
     return(dplyr::select(fin,
-                         tidyselect::all_of(c("time", "epl", "phi", "cp"))))
+                         tidyselect::all_of(c("time", "epl", "phi", "lpx", "cp"))))
   }
 }
