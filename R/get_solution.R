@@ -10,7 +10,7 @@
 # astronomical_solution, quiet, and force are documented in get_ZB
 #' @inheritParams get_ZB
 #' @inherit get_ZB references
-#' @seealso [full_ZB18a], [ZB17], [ZB18a], [ZB20]
+#' @seealso [full_ZB18a], [ZB17], [ZB18a_100], [ZB18a_300] [ZB20], [PT_ZB18a], [ZB23]
 #' @returns A [tibble][tibble::tibble-package] with the astronomical solution
 #'   (and some preprocessed new columns).
 #' @examples
@@ -20,10 +20,12 @@
 #' pth <- withr::local_tempdir(pattern = "snvecR")
 #' withr::local_options(snvecR.cachedir = pth)
 #' }
-#' get_solution("full-ZB18a")
+#' get_solution("full-ZB18a")    # input for snvec
+#' get_solution("ZB18a-300")     # eccentricity
 #' get_solution("ZB20a")
 #' get_solution("La11")
-#' get_solution("PT-ZB18a(1,1)")
+#' get_solution("PT-ZB18a(1,1)") # pre-computed precession-tilt
+#' get_solution("ZB23.R01")      # one of the 3.6 Gyr solutions
 #' }
 #' @export
 get_solution <- function(astronomical_solution = "full-ZB18a", quiet = FALSE, force = FALSE) {
@@ -60,8 +62,7 @@ get_solution <- function(astronomical_solution = "full-ZB18a", quiet = FALSE, fo
                  "ZB18a-100",
                  "ZB18a-300",
                  "ZB20a", "ZB20b", "ZB20c", "ZB20d",
-                 # TODO: fix ZB23.R01--ZB23.R64 solutions
-                 # they are very slow to load b/c they're 3.5 Gyr
+                 # ZB23 solutions are a little slow b/c they're 3.5 Gyr
                  paste0("ZB23.R", sprintf("%02d", 1:64)),
                  paste0("PT-ZB18a(", edtd$ed, ",", edtd$td, ")"),
                  # we allow for both the rounded and 4-digit specs of ed and td
@@ -104,19 +105,19 @@ get_solution <- function(astronomical_solution = "full-ZB18a", quiet = FALSE, fo
   }
 
   if (grepl("^La\\d{2}[a-z]?", astronomical_solution)) {
-    cli::cli_warn(c(
+    cli::cli_inform(c(
       "i" = "Relying on {.pkg astrochron} to get solution {.q {astronomical_solution}}",
-                    "i" = "We do not cache these results.",
-                    "!" = "{.pkg astrochron} converts time from -kyr to ka by default."))
+      "i" = "We do not cache these results.",
+      "!" = "{.pkg astrochron} converts time from -kyr to ka by default."))
     rlang::check_installed("astrochron",
                            reason = "to use `astrochron::getLaskar()`")
     dat <- tibble::as_tibble(
       astrochron::getLaskar(sol = tolower(astronomical_solution),
                             verbose = !quiet)
     )
-    cli::cli_warn(c(
-      "i" = "Output has column names {.q {colnames(dat)}}"
-    ))
+    cli::cli_alert_info(
+      "Output has column names {.q {colnames(dat)}}"
+    )
     return(dat)
   }
 
@@ -188,7 +189,7 @@ get_ZB <- function(astronomical_solution = "full-ZB18a",
 
   if (!quiet) {
     cli::cli_alert_info(c(
-      "!" = "The astronomical solution {.q {astronomical_solution}} has not been cached."
+      "The astronomical solution {.q {astronomical_solution}} has not been cached."
     ))
   }
 
@@ -297,9 +298,10 @@ get_ZB <- function(astronomical_solution = "full-ZB18a",
     raw <- prepare_solution(raw, quiet = quiet)
   } else {
     if (grepl("^ZB23\\.R", astronomical_solution)) {
-      cli::cli_inform(c("Downloading any of the ZB23.RXX solutions will take some time.",
-                        "Zip files are about 154 MB."))
-      sure <- utils::askYesNo("Continue downloading and caching {.q {astronomical_solution}}?")
+      cli::cli_inform(c(
+        "i" = "Downloading any of the ZB23.RXX solutions will take some time.",
+        "i" = "Zip files are about 154 MB."))
+      sure <- utils::askYesNo("Continue downloading and caching?")
       if (is.na(sure)) {
         cli::cli_abort("Cancelled by user.", call = NULL)
       }
@@ -325,7 +327,7 @@ get_ZB <- function(astronomical_solution = "full-ZB18a",
   if (grepl("^ZB17|^ZB18|^ZB20", astronomical_solution)) {
     raw <- dplyr::mutate(raw, time = -.data$time)
     if (!quiet) {
-      cli::cli_alert_warning(
+      cli::cli_alert_info(
         "Flipped time for {.q {astronomical_solution}} so that it is in negative kyr."
       )
     }
